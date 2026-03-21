@@ -1,15 +1,13 @@
 import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8080/api/products";
-// If your backend uses versioned API, change to:
-// const API_BASE_URL = "http://localhost:8080/api/v1/products";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-export const getAllProducts = async () => {
-  const response = await api.get("");
+export const getAllProducts = async (params = {}) => {
+  const response = await api.get("", { params });
   return response.data;
 };
 

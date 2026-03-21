@@ -1,7 +1,9 @@
 package com.shopsphere.product.controller;
 
-import com.shopsphere.product.entity.Product;
+import com.shopsphere.product.dto.ProductRequest;
+import com.shopsphere.product.dto.ProductResponse;
 import com.shopsphere.product.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,23 +17,27 @@ public class ProductController {
     private final ProductService service;
 
     @GetMapping
-    public List<Product> getAll() {
-        return service.getAllProducts();
+    public List<ProductResponse> getAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) String sort
+    ) {
+        return service.getAllProducts(search, active, sort);
     }
 
     @GetMapping("/{id}")
-    public Product getById(@PathVariable Long id) {
+    public ProductResponse getById(@PathVariable Long id) {
         return service.getProductById(id);
     }
 
     @PostMapping
-    public Product create(@RequestBody Product product) {
-        return service.createProduct(product);
+    public ProductResponse create(@Valid @RequestBody ProductRequest request) {
+        return service.createProduct(request);
     }
 
     @PutMapping("/{id}")
-    public Product update(@PathVariable Long id, @RequestBody Product product) {
-        return service.updateProduct(id, product);
+    public ProductResponse update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+        return service.updateProduct(id, request);
     }
 
     @DeleteMapping("/{id}")

@@ -6,12 +6,16 @@ import {
   updateProduct,
 } from "../api/productApi";
 import ProductForm from "../components/ProductForm";
+import { getApiErrorMessage, getValidationErrors } from "../utils/errorUtils";
 
 export default function AdminPage() {
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
+
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -27,30 +31,48 @@ export default function AdminPage() {
     }
   };
 
+  const clearMessages = () => {
+    setMessage("");
+    setErrorMessage("");
+    setValidationErrors({});
+  };
+
   const handleCreate = async (payload) => {
     try {
+      setIsSubmitting(true);
+      clearMessages();
+
       await createProduct(payload);
       setMessage("Product created successfully.");
-      setErrorMessage("");
       await loadProducts();
+      return true;
     } catch (error) {
       console.error(error);
-      setMessage("");
-      setErrorMessage("Failed to create product.");
+      setErrorMessage(getApiErrorMessage(error));
+      setValidationErrors(getValidationErrors(error));
+      return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleUpdate = async (payload) => {
     try {
+      setIsSubmitting(true);
+      clearMessages();
+
       await updateProduct(editingProduct.id, payload);
       setMessage("Product updated successfully.");
-      setErrorMessage("");
       setEditingProduct(null);
       await loadProducts();
+      return true;
     } catch (error) {
       console.error(error);
-      setMessage("");
-      setErrorMessage("Failed to update product.");
+      setErrorMessage(getApiErrorMessage(error));
+      setValidationErrors(getValidationErrors(error));
+      return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -61,26 +83,25 @@ export default function AdminPage() {
     if (!confirmed) return;
 
     try {
+      clearMessages();
       await deleteProduct(id);
       setMessage("Product deleted successfully.");
-      setErrorMessage("");
       await loadProducts();
     } catch (error) {
       console.error(error);
-      setMessage("");
-      setErrorMessage("Failed to delete product.");
+      setErrorMessage(getApiErrorMessage(error));
     }
   };
 
   const handleEditClick = (product) => {
     setEditingProduct(product);
-    setMessage("");
-    setErrorMessage("");
+    clearMessages();
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCancelEdit = () => {
     setEditingProduct(null);
+    clearMessages();
   };
 
   return (
@@ -101,6 +122,8 @@ export default function AdminPage() {
           initialData={editingProduct}
           submitButtonText={editingProduct ? "Update Product" : "Add Product"}
           onCancelEdit={editingProduct ? handleCancelEdit : null}
+          validationErrors={validationErrors}
+          isSubmitting={isSubmitting}
         />
       </section>
 
@@ -138,6 +161,7 @@ export default function AdminPage() {
                       >
                         Edit
                       </button>
+
                       <button
                         className="btn btn-danger"
                         onClick={() => handleDelete(product.id)}

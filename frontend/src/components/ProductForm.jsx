@@ -14,6 +14,8 @@ export default function ProductForm({
   initialData = null,
   submitButtonText = "Save Product",
   onCancelEdit = null,
+  validationErrors = {},
+  isSubmitting = false,
 }) {
   const [formData, setFormData] = useState(emptyForm);
 
@@ -41,18 +43,19 @@ export default function ProductForm({
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     const payload = {
       ...formData,
-      price: Number(formData.price),
-      stockQuantity: Number(formData.stockQuantity),
+      price: formData.price === "" ? "" : Number(formData.price),
+      stockQuantity:
+        formData.stockQuantity === "" ? "" : Number(formData.stockQuantity),
     };
 
-    onSubmit(payload);
+    const success = await onSubmit(payload);
 
-    if (!initialData) {
+    if (success && !initialData) {
       setFormData(emptyForm);
     }
   };
@@ -68,6 +71,9 @@ export default function ProductForm({
           onChange={handleChange}
           required
         />
+        {validationErrors.name && (
+          <small className="field-error">{validationErrors.name}</small>
+        )}
       </div>
 
       <div className="form-group">
@@ -78,6 +84,9 @@ export default function ProductForm({
           onChange={handleChange}
           rows="4"
         />
+        {validationErrors.description && (
+          <small className="field-error">{validationErrors.description}</small>
+        )}
       </div>
 
       <div className="form-row">
@@ -91,6 +100,9 @@ export default function ProductForm({
             onChange={handleChange}
             required
           />
+          {validationErrors.price && (
+            <small className="field-error">{validationErrors.price}</small>
+          )}
         </div>
 
         <div className="form-group">
@@ -102,6 +114,11 @@ export default function ProductForm({
             onChange={handleChange}
             required
           />
+          {validationErrors.stockQuantity && (
+            <small className="field-error">
+              {validationErrors.stockQuantity}
+            </small>
+          )}
         </div>
       </div>
 
@@ -112,7 +129,11 @@ export default function ProductForm({
           name="imageUrl"
           value={formData.imageUrl}
           onChange={handleChange}
+          placeholder="Enter direct image URL"
         />
+        {validationErrors.imageUrl && (
+          <small className="field-error">{validationErrors.imageUrl}</small>
+        )}
       </div>
 
       <div className="form-checkbox">
@@ -126,9 +147,17 @@ export default function ProductForm({
         <label htmlFor="active">Active</label>
       </div>
 
+      {validationErrors.active && (
+        <small className="field-error">{validationErrors.active}</small>
+      )}
+
       <div className="form-actions">
-        <button type="submit" className="btn btn-primary">
-          {submitButtonText}
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Saving..." : submitButtonText}
         </button>
 
         {onCancelEdit && (
@@ -136,6 +165,7 @@ export default function ProductForm({
             type="button"
             className="btn btn-secondary"
             onClick={onCancelEdit}
+            disabled={isSubmitting}
           >
             Cancel
           </button>

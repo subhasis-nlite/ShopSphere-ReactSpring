@@ -7,15 +7,42 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [sort, setSort] = useState("");
+
   useEffect(() => {
     loadProducts();
   }, []);
 
-  const loadProducts = async () => {
+  const loadProducts = async (customFilters = null) => {
     try {
       setLoading(true);
       setErrorMessage("");
-      const data = await getAllProducts();
+
+      const filters = customFilters || {
+        search,
+        activeFilter,
+        sort,
+      };
+
+      const params = {};
+
+      if (filters.search && filters.search.trim()) {
+        params.search = filters.search.trim();
+      }
+
+      if (filters.activeFilter === "true") {
+        params.active = true;
+      } else if (filters.activeFilter === "false") {
+        params.active = false;
+      }
+
+      if (filters.sort) {
+        params.sort = filters.sort;
+      }
+
+      const data = await getAllProducts(params);
       setProducts(data);
     } catch (error) {
       console.error(error);
@@ -25,13 +52,23 @@ export default function HomePage() {
     }
   };
 
-  if (loading) {
-    return <div className="page-message">Loading products...</div>;
-  }
+  const handleApplyFilters = () => {
+    loadProducts();
+  };
 
-  if (errorMessage) {
-    return <div className="page-message error-text">{errorMessage}</div>;
-  }
+  const handleResetFilters = () => {
+    const resetFilters = {
+      search: "",
+      activeFilter: "all",
+      sort: "",
+    };
+
+    setSearch("");
+    setActiveFilter("all");
+    setSort("");
+
+    loadProducts(resetFilters);
+  };
 
   return (
     <div className="page-container">
@@ -40,7 +77,56 @@ export default function HomePage() {
         <p>Welcome to ShopSphere V1</p>
       </div>
 
-      {products.length === 0 ? (
+      <section className="catalog-toolbar">
+        <div className="toolbar-grid">
+          <div className="form-group">
+            <label>Search</label>
+            <input
+              type="text"
+              placeholder="Search by product name"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Status</label>
+            <select
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="true">Active Only</option>
+              <option value="false">Inactive Only</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Sort</label>
+            <select value={sort} onChange={(e) => setSort(e.target.value)}>
+              <option value="">Default</option>
+              <option value="nameAsc">Name A-Z</option>
+              <option value="priceAsc">Price Low to High</option>
+              <option value="priceDesc">Price High to Low</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="toolbar-actions">
+          <button className="btn btn-primary" onClick={handleApplyFilters}>
+            Apply
+          </button>
+          <button className="btn btn-secondary" onClick={handleResetFilters}>
+            Reset
+          </button>
+        </div>
+      </section>
+
+      {loading ? (
+        <div className="page-message">Loading products...</div>
+      ) : errorMessage ? (
+        <div className="page-message error-text">{errorMessage}</div>
+      ) : products.length === 0 ? (
         <div className="page-message">No products found.</div>
       ) : (
         <div className="product-grid">
